@@ -28,42 +28,46 @@ else
   command! -nargs=+ HtmlHiLink highlight default link <args>
 endif
 
+if has('conceal') && get(g:, 'vim_markdown_conceal', 1)
+  command! -nargs=+ MkdConceal <args> conceal
+  command! -nargs=+ MkdConcealends <args> concealends
+else
+  command! -nargs=+ MkdConceal <args>
+  command! -nargs=+ MkdConcealends <args>
+endif
+
+if has('conceal') && get(g:, 'vim_markdown_conceal_code_blocks', 1)
+  command! -nargs=+ MkdConcealendsCode <args> concealends
+else
+  command! -nargs=+ MkdConcealendsCode <args>
+endif
+
+if get(g:, 'vim_markdown_emphasis_multiline', 1)
+  command! -nargs=+ MkdOneline <args>
+else
+  command! -nargs=+ MkdOneline <args> oneline
+endif
+
 syntax spell toplevel
 syntax case ignore
 syntax sync linebreaks=1
 
-let s:conceal = ''
-let s:concealends = ''
-let s:concealcode = ''
-if has('conceal') && get(g:, 'vim_markdown_conceal', 1)
-  let s:conceal = ' conceal'
-  let s:concealends = ' concealends'
-endif
-if has('conceal') && get(g:, 'vim_markdown_conceal_code_blocks', 1)
-  let s:concealcode = ' concealends'
-endif
-
 " additions to HTML groups
-if get(g:, 'vim_markdown_emphasis_multiline', 1)
-    let s:oneline = ''
-else
-    let s:oneline = ' oneline'
-endif
 syntax region mkdItalic matchgroup=mkdItalic start="\%(\*\|_\)"    end="\%(\*\|_\)"
 syntax region mkdBold matchgroup=mkdBold start="\%(\*\*\|__\)"    end="\%(\*\*\|__\)"
 syntax region mkdBoldItalic matchgroup=mkdBoldItalic start="\%(\*\*\*\|___\)"    end="\%(\*\*\*\|___\)"
-execute 'syntax region htmlItalic matchgroup=mkdItalic start="\%(^\|\s\)\zs\*\ze[^\\\*\t ]\%(\%([^*]\|\\\*\|\n\)*[^\\\*\t ]\)\?\*\_W" end="[^\\\*\t ]\zs\*\ze\_W" keepend contains=@Spell' . s:oneline . s:concealends
-execute 'syntax region htmlItalic matchgroup=mkdItalic start="\%(^\|\s\)\zs_\ze[^\\_\t ]" end="[^\\_\t ]\zs_\ze\_W" keepend contains=@Spell' . s:oneline . s:concealends
-execute 'syntax region htmlBold matchgroup=mkdBold start="\%(^\|\s\)\zs\*\*\ze\S" end="\S\zs\*\*" keepend contains=@Spell' . s:oneline . s:concealends
-execute 'syntax region htmlBold matchgroup=mkdBold start="\%(^\|\s\)\zs__\ze\S" end="\S\zs__" keepend contains=@Spell' . s:oneline . s:concealends
-execute 'syntax region htmlBoldItalic matchgroup=mkdBoldItalic start="\%(^\|\s\)\zs\*\*\*\ze\S" end="\S\zs\*\*\*" keepend contains=@Spell' . s:oneline . s:concealends
-execute 'syntax region htmlBoldItalic matchgroup=mkdBoldItalic start="\%(^\|\s\)\zs___\ze\S" end="\S\zs___" keepend contains=@Spell' . s:oneline . s:concealends
+MkdOneline MkdConcealends syntax region htmlItalic matchgroup=mkdItalic start="\%(^\|\s\)\zs\*\ze[^\\\*\t ]\%(\%([^*]\|\\\*\|\n\)*[^\\\*\t ]\)\?\*\_W" end="[^\\\*\t ]\zs\*\ze\_W" keepend contains=@Spell
+MkdOneline MkdConcealends syntax region htmlItalic matchgroup=mkdItalic start="\%(^\|\s\)\zs_\ze[^\\_\t ]" end="[^\\_\t ]\zs_\ze\_W" keepend contains=@Spell
+MkdOneline MkdConcealends syntax region htmlBold matchgroup=mkdBold start="\%(^\|\s\)\zs\*\*\ze\S" end="\S\zs\*\*" keepend contains=@Spell
+MkdOneline MkdConcealends syntax region htmlBold matchgroup=mkdBold start="\%(^\|\s\)\zs__\ze\S" end="\S\zs__" keepend contains=@Spell
+MkdOneline MkdConcealends syntax region htmlBoldItalic matchgroup=mkdBoldItalic start="\%(^\|\s\)\zs\*\*\*\ze\S" end="\S\zs\*\*\*" keepend contains=@Spell
+MkdOneline MkdConcealends syntax region htmlBoldItalic matchgroup=mkdBoldItalic start="\%(^\|\s\)\zs___\ze\S" end="\S\zs___" keepend contains=@Spell
 
 " [link](URL) | [link][id] | [link][] | ![image](URL)
 syntax region mkdFootnotes matchgroup=mkdDelimiter start="\[^"    end="\]"
-execute 'syntax region mkdID matchgroup=mkdDelimiter    start="\["    end="\]" contained oneline' . s:conceal
-execute 'syntax region mkdURL matchgroup=mkdDelimiter   start="("     end=")"  contained oneline' . s:conceal
-execute 'syntax region mkdLink matchgroup=mkdDelimiter  start="\\\@<!!\?\[\ze[^]\n]*\n\?[^]\n]*\][[(]" end="\]" contains=@mkdNonListItem,@Spell nextgroup=mkdURL,mkdID skipwhite' . s:concealends
+MkdConceal syntax region mkdID matchgroup=mkdDelimiter    start="\["    end="\]" contained oneline
+MkdConceal syntax region mkdURL matchgroup=mkdDelimiter   start="("     end=")"  contained oneline
+MkdConcealends syntax region mkdLink matchgroup=mkdDelimiter  start="\\\@<!!\?\[\ze[^]\n]*\n\?[^]\n]*\][[(]" end="\]" contains=@mkdNonListItem,@Spell nextgroup=mkdURL,mkdID skipwhite
 
 " Autolink without angle brackets.
 " mkd  inline links:      protocol     optional  user:pass@  sub/domain                    .com, .co.uk, etc         optional port   path/querystring/hash fragment
@@ -96,13 +100,13 @@ syntax match  htmlH2       /^.\+\n-\+$/ contains=@mkdHeadingContent,@Spell
 "define Markdown groups
 syntax match  mkdLineBreak    /  \+$/
 syntax region mkdBlockquote   start=/^\s*>/                   end=/$/ contains=mkdLink,mkdInlineURL,mkdLineBreak,@Spell
-execute 'syntax region mkdCode matchgroup=mkdCodeDelimiter start=/\(\([^\\]\|^\)\\\)\@<!`/                     end=/`/'  . s:concealcode
-execute 'syntax region mkdCode matchgroup=mkdCodeDelimiter start=/\(\([^\\]\|^\)\\\)\@<!``/ skip=/[^`]`[^`]/   end=/``/' . s:concealcode
-execute 'syntax region mkdCode matchgroup=mkdCodeDelimiter start=/^\s*\z(`\{3,}\)[^`]*$/                       end=/^\s*\z1`*\s*$/'            . s:concealcode
-execute 'syntax region mkdCode matchgroup=mkdCodeDelimiter start=/\(\([^\\]\|^\)\\\)\@<!\~\~/  end=/\(\([^\\]\|^\)\\\)\@<!\~\~/'               . s:concealcode
-execute 'syntax region mkdCode matchgroup=mkdCodeDelimiter start=/^\s*\z(\~\{3,}\)\s*[0-9A-Za-z_+-]*\s*$/      end=/^\s*\z1\~*\s*$/'           . s:concealcode
-execute 'syntax region mkdCode matchgroup=mkdCodeDelimiter start="<pre\(\|\_s[^>]*\)\\\@<!>"                   end="</pre>"'                   . s:concealcode
-execute 'syntax region mkdCode matchgroup=mkdCodeDelimiter start="<code\(\|\_s[^>]*\)\\\@<!>"                  end="</code>"'                  . s:concealcode
+MkdConcealendsCode syntax region mkdCode matchgroup=mkdCodeDelimiter start=/\(\([^\\]\|^\)\\\)\@<!`/                     end=/`/
+MkdConcealendsCode syntax region mkdCode matchgroup=mkdCodeDelimiter start=/\(\([^\\]\|^\)\\\)\@<!``/ skip=/[^`]`[^`]/   end=/``/
+MkdConcealendsCode syntax region mkdCode matchgroup=mkdCodeDelimiter start=/^\s*\z(`\{3,}\)[^`]*$/                       end=/^\s*\z1`*\s*$/
+MkdConcealendsCode syntax region mkdCode matchgroup=mkdCodeDelimiter start=/\(\([^\\]\|^\)\\\)\@<!\~\~/  end=/\(\([^\\]\|^\)\\\)\@<!\~\~/
+MkdConcealendsCode syntax region mkdCode matchgroup=mkdCodeDelimiter start=/^\s*\z(\~\{3,}\)\s*[0-9A-Za-z_+-]*\s*$/      end=/^\s*\z1\~*\s*$/
+MkdConcealendsCode syntax region mkdCode matchgroup=mkdCodeDelimiter start="<pre\(\|\_s[^>]*\)\\\@<!>"                   end="</pre>"
+MkdConcealendsCode syntax region mkdCode matchgroup=mkdCodeDelimiter start="<code\(\|\_s[^>]*\)\\\@<!>"                  end="</code>"
 syntax region mkdFootnote     start="\[^"                     end="\]"
 syntax match  mkdCode         /^\s*\n\(\(\s\{8,}[^ ]\|\t\t\+[^\t]\).*\n\)\+/
 syntax match  mkdCode         /\%^\(\(\s\{4,}[^ ]\|\t\+[^\t]\).*\n\)\+/
@@ -150,8 +154,8 @@ endif
 
 " Strike through
 if get(g:, 'vim_markdown_strikethrough', 0)
-    execute 'syntax region mkdStrike matchgroup=htmlStrike start="\%(\~\~\)" end="\%(\~\~\)"' . s:concealends
-    HtmlHiLink mkdStrike        htmlStrike
+  MkdOneline MkdConcealends syntax region mkdStrike matchgroup=htmlStrike start="\%(\~\~\)" end="\%(\~\~\)"
+  HtmlHiLink mkdStrike         htmlStrike
 endif
 
 syntax cluster mkdHeadingContent contains=htmlItalic,htmlBold,htmlBoldItalic,mkdFootnotes,mkdLink,mkdInlineURL,mkdStrike,mkdCode
@@ -182,3 +186,7 @@ HtmlHiLink mkdDelimiter        Delimiter
 let b:current_syntax = 'mkd'
 
 delcommand HtmlHiLink
+delcommand MkdConceal
+delcommand MkdConcealends
+delcommand MkdConcealendsCode
+delcommand MkdOneline
